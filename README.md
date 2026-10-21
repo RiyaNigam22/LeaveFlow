@@ -1,255 +1,359 @@
-# LeaveFlow — Intelligent Employee Leave Management & Approval System
+# LeaveFlow --- Intelligent Employee Leave Management & Approval System
 
-An end-to-end, rules-driven leave management application built with **Python, Streamlit, PostgreSQL and SQLAlchemy**.
-It automates the full leave lifecycle — request, validation, multi-level approval, balance update, notification, audit —
-and adds a process-analytics layer that shows *where the workflow loses time*.
+**An end-to-end, rules-driven employee leave management platform built
+with Python, Streamlit, PostgreSQL, and SQLAlchemy.**
 
-> Built as a consulting-style portfolio project demonstrating business process automation, workflow design,
-> role-based application development, relational modelling, SQL, business intelligence and auditability.
+[**🚀 Launch Live Application**](https://leaveflow-demo.streamlit.app/)
 
----
+LeaveFlow streamlines the employee leave lifecycle---from request
+submission and policy validation to multi-stage approvals, balance
+updates, notifications, audit trails, and process analytics.
 
-## 1. Business problem
+> **Portfolio project:** Demonstrates business process automation,
+> role-based access control (RBAC), relational database design, workflow
+> orchestration, and operational analytics using a fictional employee
+> dataset.
 
-In many organisations leave is still handled through email threads and spreadsheets:
+------------------------------------------------------------------------
 
-- Managers approve without seeing balances, team overlap or policy limits.
-- HR re-checks every request by hand (weekends, holidays, documents, overlaps).
-- Balances drift out of sync; nobody can prove who approved what, and when.
-- Leadership has no visibility into approval delays or absenteeism.
+## 1. Business Problem
 
-## 2. Solution
+Managing leave through emails and spreadsheets creates avoidable
+operational challenges:
 
-LeaveFlow encodes the policy once, in the database, and enforces it automatically:
+-   **Inconsistent policy enforcement:** Requests may be approved
+    without checking eligibility, balances, holidays, or overlapping
+    leave.
+-   **Fragmented approvals:** Managers and HR lack a unified view of
+    requests and pending decisions.
+-   **Poor traceability:** It is difficult to establish who approved,
+    rejected, or modified a request.
+-   **Limited visibility:** HR teams cannot easily identify approval
+    bottlenecks or absence trends.
 
+**LeaveFlow centralizes these processes in one application**, using
+configurable rules and a structured approval workflow.
+
+## 2. What LeaveFlow Does
+
+  -----------------------------------------------------------------------
+  Business need                       LeaveFlow capability
+  ----------------------------------- -----------------------------------
+  Consistent leave decisions          Centralized validation for leave
+                                      balance, dates, overlap, holidays,
+                                      documentation, and maximum duration
+
+  Multi-level approvals               Configurable Manager → HR →
+                                      Department Head routing
+
+  Accurate leave accounting           Tracks allocated, carried-forward,
+                                      used, and pending balances
+
+  Operational accountability          Records workflow actions and
+                                      changes in an audit log
+
+  Better team planning                Team leave calendar and visibility
+                                      into overlapping absences
+
+  Management insights                 Approval turnaround, pending
+                                      stages, SLA breaches, and
+                                      departmental leave trends
+  -----------------------------------------------------------------------
+
+### Approval Workflow
+
+``` mermaid
+flowchart TD
+    A[Employee submits leave request] --> B[Validate policy and balance]
+    B --> C{Valid request?}
+    C -->|No| D[Show validation findings]
+    C -->|Yes| E{Approval required?}
+    E -->|No| J[Confirm request]
+    E -->|Yes| F[Manager review]
+    F -->|Reject| K[Reject request]
+    F -->|Approve, short leave| J
+    F -->|Approve, longer leave| G[HR review]
+    G -->|Reject| K
+    G -->|Approve, up to 7 days| J
+    G -->|Approve, over 7 days| H[Department Head review]
+    H -->|Approve| J
+    H -->|Reject| K
+    J --> L[Update balance, notifications and audit log]
+    K --> L
+    L --> M[Dashboard and process analytics]
 ```
-Employee ─► Submit ─► Automatic validation ─► Manager ─► HR (if required) ─► Dept Head (if required)
-                                                              │
-                         Balance update ◄─ Notification ◄─ Audit log ◄─ Final decision ─► Analytics
-```
 
-### Business value
+Approval stages are driven by configurable rules; the diagram
+illustrates the standard approval path. Actual routing also accounts for
+leave type, approver availability, and workflow rules.
 
-| Pain point | What LeaveFlow does | Outcome |
-|---|---|---|
-| Manual policy checking | Centralised rules engine validates balance, dates, overlaps, weekends, holidays, documents and approval level at submission | Invalid requests never reach an approver; HR effort drops |
-| Inconsistent approval routing | Approval chain derived from configurable thresholds (≤2 d → Manager; >2 d → +HR; >7 d → +Dept Head) | Predictable, policy-compliant routing; changeable without code |
-| No accountability | Every state change writes an audit record with user, entity, timestamp, old and new value | Audit-ready history; answers "who approved this and when?" |
-| Slow approvals are invisible | Process analytics: avg/median turnaround, per-stage time, SLA breaches, bottleneck stage, approver response times, aging queue | Management can target the actual bottleneck |
-| Staffing surprises | Team calendar highlights overlapping absences; approvers see conflicts on the request | Better coverage decisions |
-| Balance disputes | Balances are reserved on submission and committed on final approval, inside one transaction | Balances always reconcile to request history |
+## 3. Core Features
 
-## 3. Key features
+### Employee Portal
 
-- **Three roles** (Employee, Manager, HR/Admin) with page-level and service-level authorisation
-- **Configurable leave types** (allowance, approval, document rule, carry-forward, max consecutive days, active flag) stored in the database
-- **Rules engine** returns *all* validation findings at once, with live preview in the request form
-- **Workflow engine** with explicit states and a legal-transition table; steps persisted in `approval_steps`
-- **Balance reservation model** (`available = allocated + carried − used − pending`)
-- **HR override** (approve / reject / cancel, including revoking approved leave) with mandatory reason
-- **In-app notifications** with unread highlighting; **audit log** viewer with filters
-- **Team calendar** (timeline + overlap detection) and **process analytics** dashboard
-- **Security**: bcrypt hashes, login lockout, idle session timeout, generic login errors, no raw DB errors in the UI
+-   Personal dashboard with leave balances and request history
+-   Leave submission with policy validation and working-day calculation
+-   Visibility into request status and upcoming approved leave
+-   Cancellation of eligible pending requests
+-   In-app notifications
 
-## 4. Architecture
+### Manager Portal
 
-```
+-   Team dashboard and pending approval queue
+-   Approve or reject requests with workflow checks
+-   View direct reports' leave history
+-   Team leave calendar and overlapping absence visibility
+-   Approval-related metrics
+
+### HR / Administrator Portal
+
+-   Organization-wide leave and approval dashboards
+-   Employee, department, leave type, holiday, and balance
+    administration
+-   Configurable approval rules and system settings
+-   Authorized request overrides with reasons
+-   Audit trail and process analytics
+
+### Business Rules and Workflow Controls
+
+-   Excludes weekends and configured holidays from working-day
+    calculations
+-   Checks available leave balance and overlapping requests
+-   Applies leave-type document requirements and maximum durations
+-   Routes requests through the appropriate approval stages
+-   Prevents users from approving their own requests
+-   Updates balances, notifications, and audit records as workflow
+    decisions occur
+
+## 4. Technology Stack
+
+  Layer                  Technology
+  ---------------------- ---------------------------------------------------
+  Application and UI     Python, Streamlit
+  Relational database    PostgreSQL
+  ORM and transactions   SQLAlchemy
+  Data analysis          Pandas
+  Visualizations         Plotly
+  Authentication         Password hashing with bcrypt, session-based login
+  Configuration          Environment variables, python-dotenv
+  Testing                pytest, Streamlit AppTest
+  Deployment             Streamlit Community Cloud and Supabase PostgreSQL
+  Version control        Git and GitHub
+
+## 5. Architecture
+
+LeaveFlow separates presentation, business logic, workflow decisions,
+and persistence.
+
+``` text
 leaveflow/
-├── app.py                  Entry point: login, role-based navigation, sidebar
-├── config.py               Environment-driven configuration
-├── pages/                  Streamlit pages (UI only – no business logic)
-├── auth/                   security.py (bcrypt, policy) · service.py (authenticate, lockout) · session.py (Streamlit state, RBAC guards)
-├── database/               models.py (ORM, source of truth) · connection.py · init_db.py (create/reset, schema export)
-├── services/               rules_service (validation) · leave_service (use-cases) · balance_service
-│                           admin_service (master data) · notification_service · audit_service
-├── workflows/              states.py (pure state machine & rule selection) · engine.py (steps, transitions, permissions)
-├── analytics/              metrics.py (pandas BI layer)
-├── utils/                  dates.py (working-day logic) · errors.py · ui.py · components.py
-├── seed/                   seed_data.py (demo data generated through the real services)
-├── tests/                  pytest suite
-└── schema.sql              PostgreSQL DDL (generated from the models)
+├── app.py                  # Streamlit entry point and role-based navigation
+├── config.py               # Environment-driven configuration
+├── pages/                  # Employee, manager, and HR interfaces
+├── auth/                   # Authentication, sessions, role guards
+├── database/               # SQLAlchemy models, connections, initialization
+├── services/               # Leave, balance, rules, admin, notifications, audit
+├── workflows/              # State transitions and approval orchestration
+├── analytics/              # Reporting and operational metrics
+├── utils/                  # Shared utilities and date handling
+├── seed/                   # Synthetic demonstration data generation
+├── tests/                  # Automated tests
+├── requirements.txt
+└── schema.sql              # PostgreSQL schema definition
 ```
 
-Design principles: the UI calls **services**; services call the **workflow engine** and persist; the engine and
-rules are **pure where possible** (and unit-tested without a database). Every use-case runs in **one transaction**
-(`session_scope`), so a failure never leaves a half-applied approval. Services accept an injectable clock (`now`),
-which is how the seed generates realistic history and how tests are deterministic.
+**Design principles:** - UI pages delegate business operations to
+service-layer functions. - Workflow transitions are managed centrally
+rather than scattered across UI code. - SQLAlchemy transactions keep
+related updates consistent. - Authorization is enforced through roles
+and service-level checks. - Configurable policies are stored in the
+database.
 
-### Workflow
+## 6. Database Design
 
-```mermaid
-stateDiagram-v2
-    [*] --> DRAFT
-    DRAFT --> SUBMITTED
-    SUBMITTED --> MANAGER_PENDING
-    SUBMITTED --> APPROVED: no approval required
-    MANAGER_PENDING --> HR_PENDING: >2 working days
-    MANAGER_PENDING --> APPROVED: ≤2 days
-    HR_PENDING --> DEPARTMENT_HEAD_PENDING: >7 working days
-    HR_PENDING --> APPROVED
-    DEPARTMENT_HEAD_PENDING --> APPROVED
-    MANAGER_PENDING --> REJECTED
-    HR_PENDING --> REJECTED
-    DEPARTMENT_HEAD_PENDING --> REJECTED
-    SUBMITTED --> CANCELLED
-    MANAGER_PENDING --> CANCELLED
-    HR_PENDING --> CANCELLED
-    DEPARTMENT_HEAD_PENDING --> CANCELLED
-    APPROVED --> CANCELLED: HR override only
+The relational model includes **13 core tables**.
+
+  -----------------------------------------------------------------------
+  Table(s)                            Purpose
+  ----------------------------------- -----------------------------------
+  `roles`, `users`                    Authentication and role assignment
+
+  `departments`, `employees`          Organization structure and
+                                      reporting relationships
+
+  `leave_types`                       Leave categories and policy
+                                      configuration
+
+  `leave_balances`                    Allocated, carried-forward, used,
+                                      and pending leave
+
+  `leave_requests`                    Leave applications, dates, status,
+                                      and decisions
+
+  `approval_steps`                    Individual workflow stages,
+                                      approvers, and timestamps
+
+  `approval_rules`                    Configurable approval thresholds
+                                      and stage routing
+
+  `system_settings`                   Operational policy settings
+
+  `holidays`                          Non-working company holidays
+
+  `notifications`, `audit_logs`       User notifications and change
+                                      history
+  -----------------------------------------------------------------------
+
+See [`schema.sql`](schema.sql) for the database schema.
+
+### Leave Balance Model
+
+``` text
+Available leave = Allocated + Carried forward - Used - Pending
 ```
 
-## 5. Technology stack
+Reserving leave while a request is pending helps prevent the same
+balance from being committed to multiple requests.
 
-Streamlit · Python 3.11+ · PostgreSQL 14+ · SQLAlchemy 2 · Pandas · Plotly · bcrypt · python-dotenv · pytest
+## 7. Process Analytics
 
-## 6. Database schema overview
+LeaveFlow provides operational visibility beyond basic leave totals,
+including:
 
-13 tables (full DDL in [`schema.sql`](schema.sql)):
+-   Request volume and status distribution
+-   Average and median approval turnaround
+-   Time spent in each approval stage
+-   Pending request aging and SLA breaches
+-   Department-level leave utilization
+-   Approval bottlenecks and approver response patterns
 
-| Table | Purpose |
-|---|---|
-| `roles`, `users` | Authentication, role, lockout counters; one user per employee |
-| `departments`, `employees` | Org structure; `employees.manager_id` (self FK) and `departments.head_employee_id` drive approver resolution |
-| `leave_types` | Configurable leave policy per type |
-| `leave_balances` | Per employee / type / year: allocated, carried_forward, used, pending (unique constraint) |
-| `leave_requests` | Requests with status, working days, optional document, decision metadata (check constraints on dates/status) |
-| `approval_steps` | One row per stage: approver, status, `activated_at` / `decided_at` (powers SLA analytics) |
-| `approval_rules` | Configurable thresholds → required stages |
-| `system_settings` | Weekend days, back-dating limit, advance limit, SLA hours |
-| `holidays` | Company holidays excluded from working days |
-| `notifications`, `audit_logs` | In-app messages; JSON old/new values per change |
+These metrics support analysis of workflow efficiency and staffing
+patterns.
 
-Indexes cover the hot paths (requests by employee/status and dates, steps by approver/status, unread notifications, audit by entity/time).
+## 8. Live Demo
 
-## 7. User roles
+**[Open LeaveFlow](https://leaveflow-demo.streamlit.app/)**
 
-| Capability | Employee | Manager | HR / Admin |
-|---|:-:|:-:|:-:|
-| Own dashboard, request, history, cancel pending, notifications | ✔ | ✔ | ✔ |
-| Approval queue, approve / reject (reason mandatory) | | ✔ (own reports) | ✔ (HR stage) |
-| Team dashboard, team history, team calendar | | ✔ | ✔ (calendar org-wide) |
-| Organization dashboard, process analytics, all requests | | | ✔ |
-| Manage employees, departments, leave types, holidays, approval rules, balances | | | ✔ |
-| Override requests, view audit log | | | ✔ |
+The application supports Employee, Manager, and HR/Administrator roles
+and uses demonstration data.
 
-Nobody can approve or override their own request.
+> **Demo note:** This is a portfolio application, not a production HR
+> system. Do not enter real employee, medical, or confidential
+> organizational information. Public demo access and available actions
+> may be limited.
 
-## 8. Business rules
+## 9. Run Locally
 
-| Rule | Behaviour |
-|---|---|
-| Balance | Requested working days must be ≤ available balance (pending requests are reserved) |
-| Overlap | Rejected if the dates overlap an existing *pending or approved* request of the same employee |
-| Working days | Weekends (configurable) and active company holidays are excluded |
-| Dates | End ≥ start; no more than *N* days in the past / *M* in advance (settings); a request cannot span two calendar years |
-| Documents | Required when `requires_document` and working days > `document_threshold_days` |
-| Max length | Working days per request ≤ leave type's `max_consecutive_days` |
-| Approval level | Highest matching `approval_rules` row: >0 d Manager · >2 d Manager+HR · >7 d Manager+HR+Dept Head |
-| Auto-approval | Leave types with `requires_approval = false` are confirmed immediately |
-| Approver resolution | Manager = `employee.manager`; if none → any HR user. Dept Head = `department.head`; skipped if absent, if the requester is the head, or if the same person already approved an earlier stage |
+### Prerequisites
 
-Thresholds and stages live in the `approval_rules` table and are editable under **Leave Policies**.
+-   Python 3.11 or newer
+-   PostgreSQL
+-   Git
 
-## 9. Screenshots
+### Clone and install
 
-Add your own after running the app:
+``` bash
+git clone https://github.com/RiyaNigam22/leaveflow.git
+cd leaveflow
+python -m venv .venv
+```
 
-| Page | Screenshot |
-|---|---|
-| Employee dashboard | `docs/screenshots/employee-dashboard.png` |
-| Request form with live validation | `docs/screenshots/request-form.png` |
-| Manager approval queue | `docs/screenshots/approval-queue.png` |
-| Team calendar | `docs/screenshots/team-calendar.png` |
-| Organization dashboard | `docs/screenshots/hr-dashboard.png` |
-| Process analytics | `docs/screenshots/process-analytics.png` |
+Activate the virtual environment:
 
-## 10. Installation
+**Windows PowerShell**
 
-```bash
-git clone <your-repo-url> leaveflow && cd leaveflow
-python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
+``` powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+**macOS / Linux**
+
+``` bash
+source .venv/bin/activate
+```
+
+Install dependencies:
+
+``` bash
 pip install -r requirements.txt
 ```
 
-## 11. Environment configuration
+### Configure the database
 
-```bash
-cp .env.example .env     # then edit DATABASE_URL etc.
+Create a local `.env` file based on `.env.example`, and configure a
+PostgreSQL connection:
+
+``` dotenv
+DATABASE_URL=postgresql+psycopg2://YOUR_USER:YOUR_PASSWORD@localhost:5432/YOUR_DATABASE
 ```
 
-| Variable | Purpose | Default |
-|---|---|---|
-| `DATABASE_URL` | SQLAlchemy URL of the app database | `postgresql+psycopg2://leaveflow:leaveflow@localhost:5432/leaveflow` |
-| `TEST_DATABASE_URL` | Separate database used by pytest (**its tables are dropped**) | `…/leaveflow_test` |
-| `APP_TIMEZONE` | Timezone for "today" and displayed times | `Asia/Kolkata` |
-| `SESSION_TIMEOUT_MINUTES` | Idle session expiry | `30` |
-| `MAX_LOGIN_ATTEMPTS` / `LOCKOUT_MINUTES` | Lockout policy | `5` / `15` |
-| `MAX_DOCUMENT_MB` | Upload size limit | `5` |
-| `SICK_LEAVE_CODE` / `NON_ABSENCE_CODES` | Leave-type codes used by analytics | `SICK` / `WFH` |
+**Never commit `.env`, hosted database credentials, or database backups
+to Git.**
 
-## 12. Database setup
+Create missing tables in the configured database:
 
-```bash
-# one-time, as a PostgreSQL superuser
-psql -c "CREATE USER leaveflow WITH PASSWORD 'leaveflow';"
-psql -c "CREATE DATABASE leaveflow OWNER leaveflow;"
-psql -c "CREATE DATABASE leaveflow_test OWNER leaveflow;"
-
-# create tables and load demo data (safe to re-run: --reset rebuilds everything)
-python -m database.init_db --reset
+``` bash
+python -m database.init_db
 ```
 
-Alternatives: `python -m database.init_db` creates tables only; `psql -f schema.sql` applies the DDL directly;
-`python -m database.init_db --export-schema` regenerates `schema.sql` from the models.
+> **Warning:** Initialization and reset operations are different. Do not
+> run commands with `--reset` against a database containing data you
+> need to keep.
 
-## 13. Running locally
+If you want synthetic sample records, review the seed script and its
+required environment variables before running it against a **disposable
+local database**.
 
-```bash
-streamlit run app.py
+### Start the application
+
+``` bash
+python -m streamlit run app.py
 ```
 
-Open http://localhost:8501 and sign in.
+Open `http://localhost:8501` in your browser.
 
-## 14. Testing
+## 10. Testing
 
-```bash
-pytest -q
+The repository includes automated tests for business rules, workflow
+transitions, authorization, database-backed services, and Streamlit page
+behavior.
+
+``` bash
+python -m pytest -q
 ```
 
-~136 tests, all against real PostgreSQL (`TEST_DATABASE_URL`): working-day and holiday logic, balance validation,
-overlap detection, document rules, approval-rule selection and thresholds, every workflow transition and permission,
-mandatory rejection reasons, balance reserve/commit/release/revoke, notifications, audit records, login lockout,
-admin safeguards, and Streamlit `AppTest` flows (every page renders for its role, role guards, login, request
-submission, approve/reject, and "no raw errors reach the user"). DB tests are skipped automatically if PostgreSQL is not reachable.
+Some tests require a separately configured PostgreSQL test database.
+**Never point `TEST_DATABASE_URL` to your deployed Supabase database or
+to a database containing valuable data.**
 
-## 15. Demo credentials (local development only)
+## 11. Current Limitations
 
-| Role | Username | Password | Notes |
-|---|---|---|---|
-| Employee | `employee` | `Employee@123` | Ananya Iyer, Engineering |
-| Manager | `manager` | `Manager@123` | Karthik Rao, Engineering team lead (4 reports) |
-| HR / Admin | `hr` | `HrAdmin@123` | Priya Sharma, Head of HR |
+-   Streamlit sessions are not persisted across browser refreshes.
+-   Notifications are in-app; email and messaging integrations are not
+    implemented.
+-   Team visibility is primarily based on direct reporting
+    relationships.
+-   Leave requests spanning calendar years require separate handling.
+-   SLA calculations use elapsed hours rather than a full business-hours
+    calendar.
+-   Uploaded documents are stored in the database; external object
+    storage would be preferable at scale.
+-   The application is a demonstration system and is not intended to
+    manage real employee information.
 
-All other seeded users sign in as `firstname.lastname` (e.g. `rohan.das`, `vikram.nair`) with password `Welcome@123`.
-**Change or remove these accounts before any real deployment.**
+## 12. Future Enhancements
 
-Suggested walkthrough: submit a 9-day Annual Leave as `employee` (watch the live check show a 3-stage path) →
-approve as `manager` → approve as `hr` → approve as `vikram.nair` → check notifications and the audit log → open
-*Process Analytics* as `hr`.
+-   Single sign-on and stronger production identity management
+-   Email, Teams, or Slack notifications
+-   Delegated approvers and automatic escalation
+-   Half-day and hourly leave requests
+-   Calendar integration and export
+-   Alembic-managed schema migrations
+-   External document storage
+-   Forecasting of absence peaks and workforce coverage
 
-## 16. Design notes & known limitations
+------------------------------------------------------------------------
 
-- **Sessions** live in Streamlit's server-side `session_state`; a browser refresh signs the user out (no cookie persistence). Idle timeout is enforced.
-- **Approval hours are wall-clock hours**, not business hours. SLA is a single per-stage target (`SLA_HOURS_PER_STAGE`).
-- **"Team" = direct reports.** Skip-level visibility is not modelled.
-- Requests spanning two calendar years must be split (balances are per year).
-- Notifications are in-app only (no email/SMS).
-- Documents are stored in the database (≤ 5 MB) – fine for a demo; use object storage at scale.
-- HR users cannot approve their own requests, so at least **two** HR/Admin users are needed.
-
-## 17. Future improvements
-
-Email/Teams/Slack notifications · SSO (OIDC/SAML) and cookie-based sessions · half-day and hourly leave ·
-delegation when approvers are away · business-hours SLA calendars and automatic escalation/reminders ·
-iCal export / calendar sync · Alembic migrations · REST API for HRIS / payroll integration ·
-object storage for documents · multi-level skip-level team views · forecasting of absence peaks.
+**LeaveFlow** combines business-process design with practical software
+engineering to demonstrate how structured workflows, relational data,
+and analytics can improve operational decision-making.
