@@ -1,0 +1,8 @@
+key,value,description
+weekend_days,"5,6",Weekend weekdays (Mon=0 ... Sun=6)
+max_backdate_days,7,Maximum days in the past a request may start
+max_advance_days,180,Maximum days in advance a request may start
+sla_hours_per_stage,48,Target decision time per approval stage (wall-clock hours)
+override_window_hours,72,Informational: HR may override after this wait
+company_name,Meridian Tech Pvt Ltd (fictional),Display name
+timezone,Asia/Kolkata,Application timezone

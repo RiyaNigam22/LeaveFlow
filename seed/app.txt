@@ -1,0 +1,396 @@
+
+"""LeaveFlow – entry point: sign-in, role-based navigation and sidebar."""
+
+import streamlit as st
+
+import config
+from auth.session import current_user, login, logout
+from database.connection import check_database, session_scope
+from services import notification_service
+from utils import ui
+from utils.errors import AuthenticationError
+
+
+# ---------------------------------------------------------
+# PAGE CONFIGURATION
+# ---------------------------------------------------------
+
+st.set_page_config(
+    page_title="LeaveFlow",
+    page_icon=":material/event_available:",
+    layout="wide",
+)
+
+ui.inject_css()
+
+
+# ---------------------------------------------------------
+# PAGE DEFINITIONS
+# ---------------------------------------------------------
+
+PAGES = {
+    "emp_dash": (
+        "pages/employee_dashboard.py",
+        "My Dashboard",
+        ":material/dashboard:",
+    ),
+    "request": (
+        "pages/request_leave.py",
+        "Request Leave",
+        ":material/add_circle:",
+    ),
+    "mine": (
+        "pages/my_requests.py",
+        "My Requests",
+        ":material/list_alt:",
+    ),
+    "notes": (
+        "pages/notifications.py",
+        "Notifications",
+        ":material/notifications:",
+    ),
+
+    # Manager pages
+    "mgr_dash": (
+        "pages/manager_dashboard.py",
+        "Team Dashboard",
+        ":material/monitoring:",
+    ),
+    "queue": (
+        "pages/manager_approvals.py",
+        "Approval Queue",
+        ":material/approval:",
+    ),
+    "history": (
+        "pages/manager_history.py",
+        "Team Leave History",
+        ":material/history:",
+    ),
+    "calendar": (
+        "pages/team_calendar.py",
+        "Team Calendar",
+        ":material/calendar_month:",
+    ),
+
+    # HR pages
+    "hr_dash": (
+        "pages/hr_dashboard.py",
+        "Organization Dashboard",
+        ":material/insights:",
+    ),
+    "hr_analytics": (
+        "pages/hr_analytics.py",
+        "Process Analytics",
+        ":material/analytics:",
+    ),
+    "hr_requests": (
+        "pages/hr_requests.py",
+        "All Requests",
+        ":material/fact_check:",
+    ),
+    "hr_employees": (
+        "pages/hr_employees.py",
+        "Employees & Departments",
+        ":material/groups:",
+    ),
+    "hr_policies": (
+        "pages/hr_policies.py",
+        "Leave Policies",
+        ":material/policy:",
+    ),
+    "hr_balances": (
+        "pages/hr_balances.py",
+        "Leave Balances",
+        ":material/account_balance:",
+    ),
+    "hr_audit": (
+        "pages/hr_audit.py",
+        "Audit Log",
+        ":material/manage_search:",
+    ),
+}
+
+
+# ---------------------------------------------------------
+# ROLE-BASED NAVIGATION
+# ---------------------------------------------------------
+
+NAV = {
+    config.ROLE_EMPLOYEE: {
+        "My Leave": [
+            "emp_dash",
+            "request",
+            "mine",
+            "notes",
+        ],
+    },
+
+    config.ROLE_MANAGER: {
+        "Team": [
+            "mgr_dash",
+            "queue",
+            "history",
+            "calendar",
+        ],
+        "My Leave": [
+            "emp_dash",
+            "request",
+            "mine",
+            "notes",
+        ],
+    },
+
+    config.ROLE_HR: {
+        "Organization": [
+            "hr_dash",
+            "hr_analytics",
+            "hr_requests",
+            "queue",
+            "calendar",
+        ],
+        "Administration": [
+            "hr_employees",
+            "hr_policies",
+            "hr_balances",
+            "hr_audit",
+        ],
+        "My Leave": [
+            "emp_dash",
+            "request",
+            "mine",
+            "notes",
+        ],
+    },
+}
+
+
+# ---------------------------------------------------------
+# DATABASE STATUS
+# ---------------------------------------------------------
+
+@st.cache_resource(show_spinner=False)
+def _db_status() -> str | None:
+    return check_database()
+
+
+# ---------------------------------------------------------
+# LOGIN SCREEN
+# ---------------------------------------------------------
+
+def login_screen() -> None:
+
+    # Center login form
+    _, mid, _ = st.columns([1, 1.1, 1])
+
+    with mid:
+
+        st.markdown("## LeaveFlow")
+        st.caption("Employee leave management & approval")
+
+        # Show session expiry message if applicable
+        if st.session_state.pop("session_expired", False):
+            st.warning(
+                "Your session expired due to inactivity. "
+                "Please sign in again."
+            )
+
+        # Login form
+        with st.form(
+            "login_form",
+            clear_on_submit=False,
+        ):
+            username = st.text_input(
+                "Username",
+                autocomplete="username",
+            )
+
+            password = st.text_input(
+                "Password",
+                type="password",
+                autocomplete="current-password",
+            )
+
+            submitted = st.form_submit_button(
+                "Sign in",
+                type="primary",
+                width="stretch",
+            )
+
+        # -------------------------------------------------
+        # LOGIN VALIDATION
+        # -------------------------------------------------
+
+        if submitted:
+
+            # Remove accidental spaces
+            username = username.strip()
+            password = password.strip()
+
+            if not username or not password:
+                st.error(
+                    "Please enter your username and password."
+                )
+                return
+
+            try:
+                # Existing LeaveFlow authentication system
+                login(username, password)
+
+                # Refresh the application.
+                # current_user() will now detect the logged-in
+                # user and construct the correct navigation.
+                st.rerun()
+
+            except AuthenticationError:
+                st.error("Invalid username or password.")
+
+            except Exception:
+                # Do not expose internal/database errors
+                # to the user.
+                st.error(ui.GENERIC_ERROR)
+
+
+# ---------------------------------------------------------
+# MAIN APPLICATION
+# ---------------------------------------------------------
+
+def main() -> None:
+
+    # -----------------------------------------------------
+    # 1. CHECK DATABASE
+    # -----------------------------------------------------
+
+    problem = _db_status()
+
+    if problem:
+        st.error(problem)
+
+        if st.button("Retry"):
+            _db_status.clear()
+            st.rerun()
+
+        st.stop()
+
+
+    # -----------------------------------------------------
+    # 2. CHECK CURRENT USER
+    # -----------------------------------------------------
+
+    user = current_user()
+
+    if user is None:
+        login_screen()
+        st.stop()
+
+
+    # -----------------------------------------------------
+    # 3. CREATE STREAMLIT PAGES
+    # -----------------------------------------------------
+
+    pages = {
+        key: st.Page(
+            file,
+            title=title,
+            icon=icon,
+            url_path=key,
+        )
+        for key, (file, title, icon) in PAGES.items()
+    }
+
+
+    # -----------------------------------------------------
+    # 4. BUILD ROLE-BASED NAVIGATION
+    # -----------------------------------------------------
+
+    user_role = user["role"]
+
+    # Safety check in case an invalid role reaches the UI
+    if user_role not in NAV:
+        st.error("Your account does not have a valid application role.")
+
+        if st.button("Sign out"):
+            logout()
+            st.rerun()
+
+        st.stop()
+
+    nav = {
+        section: [
+            pages[key]
+            for key in keys
+        ]
+        for section, keys in NAV[user_role].items()
+    }
+
+
+    # -----------------------------------------------------
+    # 5. FETCH NOTIFICATIONS
+    # -----------------------------------------------------
+
+    with session_scope() as session:
+        unread = notification_service.unread_count(
+            session,
+            user["user_id"],
+        )
+
+
+    # -----------------------------------------------------
+    # 6. ROLE LABEL
+    # -----------------------------------------------------
+
+    role_label = {
+        config.ROLE_EMPLOYEE: "Employee",
+        config.ROLE_MANAGER: "Manager",
+        config.ROLE_HR: "HR / Admin",
+    }[user_role]
+
+
+    # -----------------------------------------------------
+    # 7. SIDEBAR USER INFORMATION
+    # -----------------------------------------------------
+
+    with st.sidebar:
+
+        st.markdown(f"""<div class="lf-user"><div class="name">{user["full_name"]}</div><div class="meta">{role_label}</div></div>""",unsafe_allow_html=True)
+
+        if unread:
+            st.caption(
+                f":material/notifications_active: "
+                f"{unread} unread notification(s)"
+            )
+
+
+    # -----------------------------------------------------
+    # 8. NAVIGATION
+    # -----------------------------------------------------
+
+    page = st.navigation(nav)
+
+
+    # -----------------------------------------------------
+    # 9. LOGOUT
+    # -----------------------------------------------------
+
+    with st.sidebar:
+
+        if st.button(
+            "Sign out",
+            icon=":material/logout:",
+            width="stretch",
+        ):
+            logout()
+            st.rerun()
+
+
+    # -----------------------------------------------------
+    # 10. RUN SELECTED PAGE
+    # -----------------------------------------------------
+
+    page.run()
+
+
+# ---------------------------------------------------------
+# APPLICATION ENTRY POINT
+# ---------------------------------------------------------
+
+main()

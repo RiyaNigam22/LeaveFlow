@@ -1,0 +1,4 @@
+id,name,description
+1,EMPLOYEE,"Own requests, history, notifications"
+2,MANAGER,Employee + approval queue and team views for own reports
+3,HR,"HR / Admin: organisation-wide views, master data, overrides, audit log"

@@ -1,0 +1,4 @@
+id,min_days,stages,description,created_at,updated_at
+1,0,MANAGER,More than 0 working days: Manager,2024-12-02 09:00:00+05:30,2024-12-02 09:00:00+05:30
+2,2,"MANAGER,HR",More than 2 working days: Manager + HR,2024-12-02 09:00:00+05:30,2024-12-02 09:00:00+05:30
+3,7,"MANAGER,HR,DEPARTMENT_HEAD",More than 7 working days: Manager + HR + Department Head,2024-12-02 09:00:00+05:30,2024-12-02 09:00:00+05:30

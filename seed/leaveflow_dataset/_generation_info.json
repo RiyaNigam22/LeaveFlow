@@ -1,0 +1,32 @@
+{
+  "counts": {
+    "roles": 3,
+    "departments": 8,
+    "employees": 2500,
+    "users": 2500,
+    "leave_types": 8,
+    "holidays": 28,
+    "approval_rules": 3,
+    "system_settings": 7,
+    "leave_balances": 24295,
+    "leave_requests": 49998,
+    "approval_steps": 56535,
+    "audit_logs": 225198,
+    "notifications": 172539,
+    "event_log": 221384
+  },
+  "slow_managers": 22,
+  "slow_dept_heads": [
+    "vihaan.rao",
+    "amit.chandran"
+  ],
+  "slow_hr": [
+    "jaya.sinha",
+    "yash.mittal"
+  ],
+  "seed": 20261007,
+  "stats": {
+    "drafts": 236,
+    "resubmissions": 661
+  }
+}

@@ -1,0 +1,86 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+.streamlit/secrets.toml
+*.log
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.toml
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local databases and generated files
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Seed-generated credentials
+seed/user_credentials.csv
+seed/*credentials*.csv
+seed/*password*.csv
+seed/*credentials*.json
+
+# Secrets and environment configuration
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+*.pem
+*.key
+
+# Seed-generated credentials
+seed/user_credentials.csv
+seed/*credentials*.csv
+seed/*password*.csv
+seed/*credentials*.json
+
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Database files and backups
+*.db
+*.sqlite
+*.sqlite3
+*.sql.gz
+*.dump
+*.backup
+
+# Local files
+*.log
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+cmd list.txt

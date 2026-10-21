@@ -1,0 +1,9 @@
+id,code,name,description,annual_allowance,tracks_balance,requires_approval,requires_document,document_threshold_days,document_description,can_carry_forward,carry_forward_limit,max_consecutive_days,is_active,created_at,updated_at
+1,AL,Annual Leave,Paid annual / earned leave,18.0,true,true,false,0,Supporting documentation,true,5.0,15,true,2024-12-02 09:00:00+05:30,2024-12-02 09:00:00+05:30
+2,CL,Casual Leave,Short personal leave for urgent matters,8.0,true,true,false,0,Supporting documentation,false,0.0,3,true,2024-12-02 09:00:00+05:30,2024-12-02 09:00:00+05:30
+3,SICK,Sick Leave,Leave for illness or injury,10.0,true,true,true,2,Medical certificate,false,0.0,10,true,2024-12-02 09:00:00+05:30,2024-12-02 09:00:00+05:30
+4,ML,Maternity Leave,26 weeks (130 working days) as per Maternity Benefit Act,130.0,true,true,true,0,Medical certificate,false,0.0,130,true,2024-12-02 09:00:00+05:30,2024-12-02 09:00:00+05:30
+5,PL,Paternity Leave,Leave for new fathers,5.0,true,true,false,0,Supporting documentation,false,0.0,5,true,2024-12-02 09:00:00+05:30,2024-12-02 09:00:00+05:30
+6,CO,Comp-off,Compensatory off for working on a holiday / weekend,6.0,true,true,false,0,Supporting documentation,false,0.0,2,true,2024-12-02 09:00:00+05:30,2024-12-02 09:00:00+05:30
+7,WFH,Work From Home,Remote work day (not an absence); auto-approved,0.0,false,false,false,0,Supporting documentation,false,0.0,5,true,2024-12-02 09:00:00+05:30,2024-12-02 09:00:00+05:30
+8,LOP,Unpaid Leave,Loss-of-pay leave,0.0,false,true,false,0,Supporting documentation,false,0.0,30,true,2024-12-02 09:00:00+05:30,2024-12-02 09:00:00+05:30
