@@ -240,8 +240,7 @@ def login_screen() -> None:
 
     with mid:
 
-        st.markdown("<div class=047lf-login-intro047><div class=047lf-brand047><div class=047lf-brand-mark047>L</div><div><div class=047lf-brand-title047>LeaveFlow</div><div class=047lf-brand-sub047>WORKFORCE INTELLIGENCE</div></div></div><h1>Welcome back</h1><p>Sign in to your workspace</p></div>", unsafe_allow_html=True)
-
+        st.markdown("""<div class="lf-login-intro"><div class="lf-brand"><div class="lf-brand-mark">L</div><div><div class="lf-brand-title">LeaveFlow</div><div class="lf-brand-sub">WORKFORCE INTELLIGENCE</div></div></div><h1>Welcome back</h1><p>Sign in to your workspace</p></div>""",unsafe_allow_html=True,)
         # Show session expiry message if applicable
         if st.session_state.pop("session_expired", False):
             st.warning(
