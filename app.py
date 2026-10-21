@@ -13,35 +13,6 @@ import streamlit as st
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
-st.subheader("Temporary Database Diagnostics")
-
-db_url = os.getenv("DATABASE_URL")
-
-if not db_url:
-    st.error("DATABASE_URL is missing on Streamlit Cloud.")
-else:
-    try:
-        parsed = make_url(db_url)
-
-        st.write("Database host:", parsed.host)
-        st.write("Database port:", parsed.port)
-        st.write("Database name:", parsed.database)
-
-        engine = create_engine(
-            db_url,
-            connect_args={"connect_timeout": 10},
-            pool_pre_ping=True,
-        )
-
-        with engine.connect() as conn:
-            result = conn.execute(text("SELECT COUNT(*) FROM public.users"))
-            st.success(f"Supabase connected! Users found: {result.scalar()}")
-
-        engine.dispose()
-
-    except Exception as exc:
-        st.error(f"Connection failed: {type(exc).__name__}")
-        st.write("Error category:", str(exc).splitlines()[0].split("password")[0])
 
 
 # ---------------------------------------------------------
